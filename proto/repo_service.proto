@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+option go_package = "repo-service/pb";
+
+import "google/protobuf/empty.proto";
+
+service RepoService {
+    rpc CreateRepo(CreateRepoRequest) returns (PrivateRepoResponse) {}
+    rpc GetPrivateRepoByIdentifier(IdentifierRequest) returns (PrivateRepoResponse) {}
+    rpc GetPublicRepoByIdentifier(IdentifierRequest) returns (PublicRepoResponse) {}
+    rpc GetPrivateRepos(IdentifierRequest) returns (PrivateReposResponse) {}
+    rpc GetPublicRepos(IdentifierRequest) returns (PublicReposResponse) {}
+    rpc UpdateRepo(PrivateRepoRequest) returns (PrivateReposResponse) {}
+    rpc DeleteRepo(PrivateRepoRequest) returns (google.protobuf.Empty) {}
+}
+
+message PrivateRepoRequest {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    string createdAt = 4;
+    string updatedAt = 5;
+    string ownerId = 6;
+}
+
+message PrivateReposResponse {
+    repeated PrivateRepoResponse repos = 1;
+}
+
+message PrivateRepoResponse {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    string createdAt = 4;
+    string updatedAt = 5;
+    string ownerId = 6;
+}
+
+message PublicReposResponse {
+    repeated PublicRepoResponse repos = 1;
+}
+
+message PublicRepoResponse {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    string createdAt = 4;
+    string updatedAt = 5;
+}
+
+message CreateRepoRequest {
+    string ownerId = 1;
+    string name = 2;
+    string description = 3;
+}
+
+message IdentifierRequest {
+    string repoIdentifier = 1;
+}
