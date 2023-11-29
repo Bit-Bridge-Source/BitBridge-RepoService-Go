@@ -1,6 +1,8 @@
-package rest
+package router
 
-type HandlerFunc func(ctx HTTPContext)
+import "github.com/Bit-Bridge-Source/BitBridge-RepoService-Go/internal/rest/server"
+
+type HandlerFunc func(ctx server.HTTPContext)
 
 type Router interface {
 	GET(path string, handler HandlerFunc)
