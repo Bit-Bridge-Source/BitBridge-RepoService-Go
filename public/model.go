@@ -14,6 +14,10 @@ type PublicRepoModel struct {
 	UpdatedAt   time.Time          `json:"updated_at" bson:"updated_at"`
 }
 
+type PublicReposModel struct {
+	Repos []*PublicRepoModel `json:"repos"`
+}
+
 type CreateRepoModel struct {
 	OwnerID     string `json:"ownerId"`                 // Owner's ID
 	Name        string `json:"name" binding:"required"` // Repo name

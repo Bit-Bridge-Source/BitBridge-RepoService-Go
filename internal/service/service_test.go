@@ -31,6 +31,16 @@ func (r *RepositoryMock) FindByName(ctx context.Context, name string) (*model.Pr
 	return args.Get(0).(*model.PrivateRepoModel), args.Error(1)
 }
 
+func (r *RepositoryMock) FindAllByName(ctx context.Context, name string, page int64, pageSize int64) ([]*model.PrivateRepoModel, error) {
+	args := r.Called(ctx, name, page, pageSize)
+	return args.Get(0).([]*model.PrivateRepoModel), args.Error(1)
+}
+
+func (r *RepositoryMock) FindAllByOwnerID(ctx context.Context, ownerID string, page int64, pageSize int64) ([]*model.PrivateRepoModel, error) {
+	args := r.Called(ctx, ownerID, page, pageSize)
+	return args.Get(0).([]*model.PrivateRepoModel), args.Error(1)
+}
+
 func (r *RepositoryMock) UpdateOne(ctx context.Context, repo *model.PrivateRepoModel) (*model.PrivateRepoModel, error) {
 	args := r.Called(ctx, repo)
 	return args.Get(0).(*model.PrivateRepoModel), args.Error(1)

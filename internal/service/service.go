@@ -17,6 +17,8 @@ type RepoService interface {
 	FindById(ctx context.Context, id string) (*model.PrivateRepoModel, error)
 	FindByName(ctx context.Context, name string) (*model.PrivateRepoModel, error)
 	FindByFindByIdentifier(ctx context.Context, identifier string) (*model.PrivateRepoModel, error)
+	FindAllByName(ctx context.Context, name string, page int64, pageSize int64) ([]*model.PrivateRepoModel, error)
+	FindAllByOwnerID(ctx context.Context, ownerID string, page int64, pageSize int64) ([]*model.PrivateRepoModel, error)
 	Update(ctx context.Context, repo *model.PrivateRepoModel) (*model.PrivateRepoModel, error)
 	Delete(ctx context.Context, repo *model.PrivateRepoModel) error
 }
@@ -70,6 +72,14 @@ func (s *RepoServiceImpl) Delete(ctx context.Context, repo *model.PrivateRepoMod
 	return s.Repository.DeleteOne(ctx, repo)
 }
 
+func (s *RepoServiceImpl) FindAllByName(ctx context.Context, name string, page int64, pageSize int64) ([]*model.PrivateRepoModel, error) {
+	return s.Repository.FindAllByName(ctx, name, page, pageSize)
+}
+
+func (s *RepoServiceImpl) FindAllByOwnerID(ctx context.Context, ownerID string, page int64, pageSize int64) ([]*model.PrivateRepoModel, error) {
+	return s.Repository.FindAllByOwnerID(ctx, ownerID, page, pageSize)
+}
+
 func normalizeRepoName(name string) string {
 	name = strings.ReplaceAll(name, " ", "-")
 	name = strings.ToLower(name)
@@ -77,3 +87,6 @@ func normalizeRepoName(name string) string {
 	name = re.ReplaceAllString(name, "-")
 	return name
 }
+
+// Ensure that RepoServiceImpl implements RepoService
+var _ RepoService = &RepoServiceImpl{}

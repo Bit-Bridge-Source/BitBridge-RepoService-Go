@@ -24,3 +24,7 @@ func (privateRepoModel *PrivateRepoModel) ToPublicRepoModel() *repo.PublicRepoMo
 		CreatedAt: privateRepoModel.CreatedAt,
 	}
 }
+
+type PrivateReposModel struct {
+	Repos []*PrivateRepoModel `json:"repos"`
+}

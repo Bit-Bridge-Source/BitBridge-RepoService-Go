@@ -3,6 +3,7 @@ package repository_test
 import (
 	"context"
 	"errors"
+	"reflect"
 	"testing"
 	"time"
 
@@ -40,6 +41,11 @@ func (m *MongoAdapterMock) FindOne(ctx context.Context, filter interface{}, opts
 	return args.Get(0).(*mongo.SingleResult)
 }
 
+func (m *MongoAdapterMock) Find(ctx context.Context, filter interface{}, opts ...*options.FindOptions) (cur *mongo.Cursor, err error) {
+	args := m.Called(ctx, filter, opts)
+	return args.Get(0).(*mongo.Cursor), args.Error(1)
+}
+
 type SingleResultWrapper struct {
 	decoder SingleResultDecoder
 }
@@ -59,6 +65,88 @@ type SingleResultMock struct {
 func (s *SingleResultMock) Decode(val interface{}) error {
 	args := s.Called(val)
 	return args.Error(0)
+}
+
+type MongoCursorMock struct {
+	mock.Mock
+	current int
+	data    []interface{} // Holds the slice of data to be returned
+}
+
+func (m *MongoCursorMock) Next(ctx context.Context) bool {
+	return m.current < len(m.data)
+}
+
+func (m *MongoCursorMock) Decode(val interface{}) error {
+	args := m.Called(val)
+	if m.current < len(m.data) {
+		// Copy the data to the passed pointer
+		reflect.ValueOf(val).Elem().Set(reflect.ValueOf(m.data[m.current]).Elem())
+		m.current++
+		return args.Error(0)
+	}
+	return errors.New("no more items")
+}
+
+func (m *MongoCursorMock) Close(ctx context.Context) error {
+	args := m.Called(ctx)
+	return args.Error(0)
+}
+
+// Helper function to setup the mock data
+func (m *MongoCursorMock) SetData(data []interface{}) {
+	m.data = data
+}
+
+func TestFindAll_Success(t *testing.T) {
+	ctx := context.TODO()
+	adapterMock := new(MongoAdapterMock)
+	repository := repository.NewRepoRepository(adapterMock)
+
+	// Create a slice of expected results
+	expectedRepos := []*model.PrivateRepoModel{
+		{
+			ID:          primitive.NewObjectID(),
+			Name:        "test1",
+			OwnerID:     primitive.NewObjectID().Hex(),
+			Description: "test description 1",
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		},
+		{
+			ID:          primitive.NewObjectID(),
+			Name:        "test2",
+			OwnerID:     primitive.NewObjectID().Hex(),
+			Description: "test description 2",
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		},
+	}
+
+	// Mock the Find call to return a cursor with expected results
+	cursor := &MongoCursorMock{} // You would need to implement MongoCursorMock
+	cursor.On("Next", mock.Anything).Return(true).Times(len(expectedRepos))
+	cursor.On("Decode", mock.Anything).Return(func(val interface{}) error {
+		*val.(*model.PrivateRepoModel) = *expectedRepos[0]
+		expectedRepos = expectedRepos[1:]
+		return nil
+	}).Times(len(expectedRepos))
+	cursor.On("Close", mock.Anything).Return(nil)
+
+	adapterMock.On("Find", ctx, mock.Anything, mock.Anything).Return(cursor, nil)
+
+	repos, err := repository.FindAllByOwnerID(ctx, primitive.NewObjectID().Hex(), 1, 10)
+
+	assert.Nil(t, err)
+	assert.Equal(t, len(expectedRepos), len(repos))
+	for i, repo := range repos {
+		assert.Equal(t, expectedRepos[i].ID, repo.ID)
+		assert.Equal(t, expectedRepos[i].Name, repo.Name)
+		// ... more assertions as needed
+	}
+
+	adapterMock.AssertExpectations(t)
+	cursor.AssertExpectations(t)
 }
 
 func TestCreateRepo_Success(t *testing.T) {
